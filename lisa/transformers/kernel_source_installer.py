@@ -238,12 +238,14 @@ class SourceInstaller(BaseInstaller):
             kernel_config = code_path.joinpath(kconfig_file)
             err_msg = f"cannot find kernel config path: {kernel_config}"
             assert node.shell.exists(kernel_config), err_msg
+            self._log.info(f"using the config at {kernel_config}")
             cp.copy(
                 src=kernel_config,
                 dest=PurePath(".config"),
                 cwd=code_path,
             )
         else:
+            self._log.info("using default config")
             cp.copy(
                 src=node.get_pure_path(
                     f"/boot/config-{kernel_information.kernel_version_raw}"

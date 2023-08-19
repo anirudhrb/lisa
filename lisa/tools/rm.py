@@ -21,7 +21,7 @@ class Rm(Tool):
         self.run(path, sudo=sudo, force_run=True)
 
     def remove_directory(self, path: str, sudo: bool = False) -> None:
-        self.run(f"-rf {path}", sudo=sudo, force_run=True)
+        self.run(f"-rf {path}", sudo=sudo, shell=True, force_run=True)
 
     @classmethod
     def _windows_tool(cls) -> Optional[Type[Tool]]:

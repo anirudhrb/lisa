@@ -1,6 +1,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT license.
 
+import base64
 import pathlib
 import re
 from typing import Dict, List, Optional
@@ -58,11 +59,15 @@ class Git(Tool):
         dir_name: str = "",
         fail_on_exists: bool = True,
         auth_token: Optional[str] = None,
+        ado_pat: Optional[str] = None,
         timeout: int = 600,
     ) -> pathlib.PurePath:
         self.node.shell.mkdir(cwd, exist_ok=True)
         auth_flag = ""
-        if auth_token:
+        if ado_pat:
+            pat_b64 = base64.b64encode(f":{ado_pat}".encode("utf-8")).decode("utf-8")
+            auth_flag = f'-c http.extraheader="AUTHORIZATION: Basic {pat_b64}"'
+        elif auth_token:
             auth_flag = f'-c http.extraheader="AUTHORIZATION: bearer {auth_token}"'
 
         cmd = f"clone {auth_flag} {url} {dir_name} --recurse-submodules"

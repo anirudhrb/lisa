@@ -2,14 +2,14 @@
 # Licensed under the MIT license.
 import os
 from dataclasses import dataclass, field
-from pathlib import PurePath
+from pathlib import PurePath, PurePosixPath
 from typing import List, Type
 
 from dataclasses_json import dataclass_json
 
 from lisa import schema
 from lisa.node import Node
-from lisa.tools import Cp, Sed, Tar, Uname
+from lisa.tools import Cp, Echo, Ls, Sed, Tar, Uname
 from lisa.util import field_metadata
 
 from .kernel_installer import BaseInstaller, BaseInstallerSchema
@@ -142,6 +142,11 @@ class Dom0Installer(SourceInstaller):
 
     def install(self) -> str:
         node = self._node
+
+        mariner_cfg = PurePosixPath("/boot/mariner.cfg")
+        if not node.tools[Ls].path_exists(str(mariner_cfg), sudo=True):
+            node.tools[Echo].write_to_file("", mariner_cfg, sudo=True)
+
         new_kernel = super().install()
 
         # If it is dom0,

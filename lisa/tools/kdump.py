@@ -4,7 +4,7 @@
 import re
 from pathlib import PurePath, PurePosixPath
 from time import sleep
-from typing import TYPE_CHECKING, Any, List, Type
+from typing import TYPE_CHECKING, Any, List, Optional, Type
 
 from semver import VersionInfo
 
@@ -60,6 +60,29 @@ class Kexec(Tool):
     @property
     def can_install(self) -> bool:
         return True
+
+    def do_kexec(
+        self,
+        new_kernel_version: str,
+        use_initrd: bool = True,
+        reuse_cmdline: bool = True,
+        append_cmdline: str = "",
+        timestamp_file: Optional[str] = None,
+    ) -> None:
+        append_opt = f"--append={append_cmdline}" if len(append_cmdline) > 0 else ""
+        initrd_opt = (
+            f"--initrd=/boot/initrd.img-{new_kernel_version}" if use_initrd else ""
+        )
+        reuse_opt = f"--reuse-cmdline" if reuse_cmdline else ""
+        kexec_args = f"-s /boot/vmlinuz-{new_kernel_version} {initrd_opt} {reuse_opt} {append_opt}"
+
+        if timestamp_file is None:
+            self.run_async(kexec_args, sudo=True, force_run=True, shell=True)
+        else:
+            self.node.execute_async(
+                f"(date +%s%3N > {timestamp_file}) && sudo kexec {kexec_args}",
+                shell=True,
+            )
 
     def _install(self) -> bool:
         assert isinstance(self.node.os, Posix)
