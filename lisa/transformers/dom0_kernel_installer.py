@@ -256,12 +256,14 @@ class BinaryInstaller(BaseInstaller):
             replacement=vmlinuz_replacement,
             file=target_grub_file_path,
             sudo=True,
+            backup=False,
         )
         sed.substitute(
             regexp="REPL_INITRD_VERSION",
             replacement=initrd_replacement,
             file=target_grub_file_path,
             sudo=True,
+            backup=False,
         )
 
         lsblk = node.tools[Lsblk]
@@ -271,12 +273,14 @@ class BinaryInstaller(BaseInstaller):
             replacement=root_partition.uuid,
             file=target_grub_file_path,
             sudo=True,
+            backup=False,
         )
         sed.substitute(
             regexp="REPL_PARTUUID",
             replacement=root_partition.part_uuid,
             file=target_grub_file_path,
             sudo=True,
+            backup=False,
         )
 
         # Comment out the existing GRUB_DEFAULT line

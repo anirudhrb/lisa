@@ -23,6 +23,7 @@ class Sed(Tool):
         file: str,
         match_lines: str = "",
         sudo: bool = False,
+        backup: bool = True,
     ) -> None:
         # always force run, make sure it happens every time.
         if match_lines != "":
@@ -31,7 +32,8 @@ class Sed(Tool):
             expression = f"s/{regexp}/{replacement}/g"
         expression = expression.replace('"', r"\"").replace("$", r"\$")
 
-        cmd = f'-i.bak "{expression}" {file}'
+        bak = ".bak" if backup else ""
+        cmd = f'-i{bak} "{expression}" {file}'
 
         result = self.run(
             cmd,
