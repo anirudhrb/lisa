@@ -70,12 +70,7 @@ class RepoLocationSchema(LocalLocationSchema):
 @dataclass_json()
 @dataclass
 class PatchModifierSchema(BaseModifierSchema):
-    repo: str = field(
-        default="",
-        metadata=field_metadata(
-            required=True,
-        ),
-    )
+    repo: str = ""
     ref: str = ""
     path: str = ""
     file_pattern: str = "*.patch"
@@ -571,11 +566,17 @@ class PatchModifier(BaseModifier):
     def modify(self) -> None:
         runbook: PatchModifierSchema = self.runbook
 
-        code_path = _get_code_path(runbook.path, self._node, "patch")
-
         git = self._node.tools[Git]
-        code_path = git.clone(url=runbook.repo, cwd=code_path, ref=runbook.ref)
-        patches_path = code_path / runbook.file_pattern
+
+        if runbook.repo:
+            code_path = _get_code_path(runbook.path, self._node, "patch")
+            code_path = git.clone(url=runbook.repo, cwd=code_path, ref=runbook.ref)
+            patches_path = code_path / runbook.file_pattern
+        else:
+            patch_path_local = PurePath(runbook.path)
+            patches_path = PurePath(f"/var/tmp/{patch_path_local.name}");
+            self._node.shell.copy(patch_path_local, patches_path);
+
         git.apply(cwd=self._code_path, patches=patches_path)
 
 
