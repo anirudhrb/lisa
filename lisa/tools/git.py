@@ -260,6 +260,7 @@ class Git(Tool):
         contains: str = "",
         return_last: bool = True,
         filter_: str = "",
+        fail_on_not_found: bool = True,
     ) -> str:
         sort_arg = ""
         contains_arg = ""
@@ -301,11 +302,17 @@ class Git(Tool):
             error_info += f" filter:{filter_}"
 
         if (len(tags) == 0):
-            self._log.debug(
-                "Could not find any tags with this sort or "
-                f"filter setting: {error_info}"
-            )
-            return ""
+            if fail_on_not_found:
+                raise LisaException(
+                    "Could not find any tags with this sort or "
+                    f"filter setting: {error_info}"
+                )
+            else:
+                self._log.debug(
+                    "Could not find any tags with this sort or "
+                    f"filter setting: {error_info}"
+                )
+                return ""
 
         if return_last:
             return tags[-1]
