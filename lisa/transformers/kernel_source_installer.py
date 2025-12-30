@@ -2,7 +2,7 @@
 # Licensed under the MIT license.
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from pathlib import PurePath
+from pathlib import Path, PurePath
 from typing import Any, Dict, List, Optional, Type, cast
 
 from dataclasses_json import dataclass_json
@@ -11,7 +11,7 @@ from lisa import schema
 from lisa.base_tools import Mv
 from lisa.node import Node
 from lisa.operating_system import CBLMariner, CpuArchitecture, Redhat, Ubuntu
-from lisa.tools import B4, Cp, Echo, Git, Make, Sed, Uname
+from lisa.tools import B4, Cp, Echo, Git, Make, Mkdir, Sed, Uname
 from lisa.tools.gcc import Gcc
 from lisa.tools.lscpu import Lscpu
 from lisa.util import (
@@ -573,9 +573,13 @@ class PatchModifier(BaseModifier):
             code_path = git.clone(url=runbook.repo, cwd=code_path, ref=runbook.ref)
             patches_path = code_path / runbook.file_pattern
         else:
-            patch_path_local = PurePath(runbook.path)
-            patches_path = PurePath(f"/var/tmp/{patch_path_local.name}");
-            self._node.shell.copy(patch_path_local, patches_path);
+            patch_dir = Path(runbook.path)
+            patches_local_paths = [p.resolve() for p in patch_dir.glob(runbook.file_pattern)]
+            remote_patches_dir = self._node.working_path / "patches"
+            self._node.tools[Mkdir].create_directory(str(remote_patches_dir))
+            for path in patches_local_paths:
+                self._node.shell.copy(path, remote_patches_dir / path.name)
+            patches_path = remote_patches_dir / runbook.file_pattern
 
         git.apply(cwd=self._code_path, patches=patches_path)
 
