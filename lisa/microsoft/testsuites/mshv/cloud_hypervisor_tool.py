@@ -3,6 +3,7 @@
 
 import secrets
 from pathlib import Path
+from typing import List, Optional
 
 from lisa import Node
 from lisa.executable import Tool
@@ -31,10 +32,24 @@ class CloudHypervisor(Tool):
         guest_vm_type: str = "NON-CVM",
         igvm_path: str = "",
         log_file: str = "",
+        extra_disks: Optional[List[str]] = None,
+        serial_file: str = "",
+        cmdline: str = "",
+        mac: str = "",
+        host_ip: str = "",
+        host_mask: str = "",
     ) -> Process:
         opt_disk_readonly = "on" if disk_readonly else "off"
-        log_file_arg = f"--log-file {log_file}" if log_file else ""
-        args: str = f'--cpus boot={cpus} --memory size={memory_mb}M --disk "path={disk_path},readonly={opt_disk_readonly}" {log_file_arg} --net "tap=,mac=,ip=,mask="'  # noqa: E501
+        log_file_arg = f"-v -v -v -v --log-file {log_file}" if log_file else ""
+        serial_arg = f'--serial "file={serial_file}"' if serial_file else ""
+
+        disk_specs = [f'"path={disk_path},readonly={opt_disk_readonly},direct=off"']
+        if extra_disks:
+            for extra in extra_disks:
+                disk_specs.append(f'"path={extra},readonly=on,direct=off"')
+        disk_arg = "--disk " + " ".join(disk_specs)
+
+        args: str = f'--cpus boot={cpus} --memory size={memory_mb}M {disk_arg} {log_file_arg} {serial_arg} --net "tap=,mac={mac},ip={host_ip},mask={host_mask}" --cmdline "{cmdline}"'  # noqa: E501
 
         if guest_vm_type == "CVM":
             host_data = secrets.token_hex(32)
